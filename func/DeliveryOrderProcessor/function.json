@@ -1,0 +1,28 @@
+{
+  "bindings": [
+    {
+      "authLevel": "function",
+      "name": "req",
+      "type": "httpTrigger",
+      "direction": "in",
+      "methods": [
+        "get",
+        "post"
+      ]
+    },
+    {
+      "name": "$return",
+      "type": "http",
+      "direction": "out"
+    },
+    {
+      "name": "orderDocuments",
+      "direction": "out",
+      "type": "cosmosDB",
+      "databaseName": "CosmosDB",
+      "collectionName": "Orders",
+      "createIfNotExists": true,
+      "connectionStringSetting": "graduateworcosmosdbaccount_DOCUMENTDB"
+    }
+  ]
+}

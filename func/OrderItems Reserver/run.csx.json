@@ -1,0 +1,33 @@
+#r "Newtonsoft.Json"
+#r "Microsoft.WindowsAzure.Storage"
+
+using System.Net;
+using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
+using Microsoft.WindowsAzure.Storage.Queue;
+using System;
+
+public static void Run(CloudQueueMessage orderQueueItem, ILogger log)
+{
+    var storageAccountString = Environment.GetEnvironmetValiable("AzureWebStorage");
+    CloudStorageAccount storageAccount = CloudStorageAccount.Parse(storageAccountString);
+    CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
+    CloudBlobContainer container = blobClient.GetContainerReference("orders");
+    await container.CreateIfNotExistsAsync();  
+
+    string blobName = Guid.NewGuid().ToString() + ".json";
+    CloudBlockBlob blob = container.GetBlockBlobReference(blobName);
+    blob.Properties.ContentType = "application/json";    
+ 
+    using (var ms = new MemoryStream())  
+    {  
+         StreamWriter writer = new StreamWriter(ms);  
+         writer.Write(orderQueueItem.AsString);  
+         writer.Flush();  
+         ms.Position = 0;
+
+         await blob.UploadFromStreamAsync(ms);  
+    }
+
+    await blob.SetPropertiesAsync();   
+}

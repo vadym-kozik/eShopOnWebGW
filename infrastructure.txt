@@ -1,0 +1,149 @@
+
+az group create \
+    --name GraduateWorkRG \
+    --location westeurope
+
+az network traffic-manager profile create \
+    --name GraduateWorkVKTrafficManagerProfile \
+    --resource-group GraduateWorkRG \
+    --routing-method Geographic \
+    --path "/" \
+    --protocol HTTP \
+    --unique-dns-name GraduateWorkVKTrafficManager \
+    --ttl 30 \
+    --port 80
+
+az appservice plan create \
+    --name GraduateWorkWestEuropeAppPlan \
+    --resource-group GraduateWorkRG \
+    --location westeurope \
+    --sku S1
+
+az appservice plan create \
+    --name GraduateWorkEastUsAppPlan \
+    --resource-group GraduateWorkRG \
+    --location eastus \
+    --sku S1
+
+az webapp create \
+    --name GraduateWorkWestEuropeVKWebApp \
+    --plan GraduateWorkWestEuropeAppPlan \
+    --resource-group GraduateWorkRG \
+    --runtime "DOTNET|5.0"
+
+az webapp create \
+    --name GraduateWorkEastUsVKWebApp \
+    --plan GraduateWorkEastUsAppPlan \
+    --resource-group GraduateWorkRG \
+    --runtime "DOTNET|5.0"
+
+az webapp create \
+    --name GraduateWorkWestEuropeVKWebApi \
+    --plan GraduateWorkWestEuropeAppPlan \
+    --resource-group GraduateWorkRG \
+    --runtime "DOTNET|5.0"
+
+az webapp show \
+    --name GraduateWorkWestEuropeVKWebApp \
+    --resource-group GraduateWorkRG \
+    --query id
+
+az network traffic-manager endpoint create \
+    --name GraduateWorkWestEuropeVKWebAppEndpoint \
+    --resource-group GraduateWorkRG \
+    --profile-name GraduateWorkVKTrafficManagerProfile \
+    --type azureEndpoints \
+    --target-resource-id ####### \
+    --geo-mapping GEO-EU \
+    --endpoint-status Enabled
+
+az webapp show \
+    --name GraduateWorkEastUsVKWebApp \
+    --resource-group GraduateWorkRG \
+    --query id
+
+az network traffic-manager endpoint create \
+    --name GraduateWorkEastUsVKWebAppEndpoint \
+    --resource-group GraduateWorkRG \
+    --profile-name GraduateWorkVKTrafficManagerProfile \
+    --type azureEndpoints \
+    --target-resource-id /subscriptions/6feaeccd-76ab-41ce-a485-9667969fcd94/resourceGroups/GraduateWorkRG/providers/Microsoft.Web/sites/GraduateWorkEastUsVKWebApp \
+    --geo-mapping US \
+    --endpoint-status Enabled
+
+az storage account create \
+    --name graduateworkstorage \
+    --location westeurope \
+    --resource-group GraduateWorkRG \
+    --sku Standard_LRS
+
+az functionapp create \
+    --resource-group GraduateWorkRG \
+    --plan GraduateWorkWestEuropeAppPlan \
+    --runtime dotnet \
+    --os-type Windows \
+    --functions-version 3 \
+    --name GraduateWorkWestEuropeVKFuncApp \
+    --storage-account graduateworkstorage
+
+az cosmosdb create \
+  --name graduateworcosmosdbaccount \
+  --resource-group GraduateWorkRG 
+
+az webapp config appsettings set \
+  --resource-group GraduateWorkRG \
+  --name GraduateWorkWestEuropeVKWebApp \
+  --settings ASPNETCORE_ENVIRONMENT=Development USE_SQL_SERVER=true CatalogConnection=sql IdentityConnection=sql SB_NAMESPACE_CONNECTION_STRING=sb SB_QUEUE_NAME=orders-queue DELIVERY_ORDER_PROCESSOR_FUNCTION=f
+
+az webapp config appsettings set \
+  --resource-group GraduateWorkRG \
+  --name GraduateWorkEastUsVKWebApp \
+  --settings ASPNETCORE_ENVIRONMENT=Development USE_SQL_SERVER=true CatalogConnection=sql IdentityConnection=sql SB_NAMESPACE_CONNECTION_STRING=sb SB_QUEUE_NAME=orders-queue DELIVERY_ORDER_PROCESSOR_FUNCTION=f
+
+az webapp config appsettings set \
+  --resource-group GraduateWorkRG \
+  --name GraduateWorkWestEuropeVKWebApi \
+  --settings ASPNETCORE_ENVIRONMENT=Development USE_SQL_SERVER=true CatalogConnection=sql IdentityConnection=sql SB_NAMESPACE_CONNECTION_STRING=sb SB_QUEUE_NAME=orders-queue DELIVERY_ORDER_PROCESSOR_FUNCTION=f
+
+az sql server create \
+  --location westeurope \
+  --resource-group GraduateWorkRG \
+  --name GraduateWorkWestEuropeVKSQLServer \
+  --admin-user myadminuser \
+  --admin-password p01W@tmp9swk
+
+az sql db create \
+  --resource-group GraduateWorkRG \
+  --server GraduateWorkWestEuropeVKSQLServer \
+  --name Catalog \
+  --edition GeneralPurpose \
+  --family Gen5 \
+  --capacity 2 \
+  --zone-redundant false 
+
+az sql db create \
+  --resource-group GraduateWorkRG \
+  --server GraduateWorkWestEuropeVKSQLServer \
+  --name Identity \
+  --edition GeneralPurpose \
+  --family Gen5 \
+  --capacity 2 \
+  --zone-redundant false 
+
+az servicebus namespace create \
+  --name GraduateWorkWestEuropeVKSBusNS \
+  --resource-group GraduateWorkRG \
+  --sku Basic \
+  --location westeurope
+
+az servicebus queue create \
+  --resource-group GraduateWorkRG \
+  --namespace-name GraduateWorkWestEuropeVKSBusNS \
+  --name OrdersQueue
+
+az acr create \
+  --resource-group GraduateWorkRG \
+  --name GraduateWorkWestEuropeVKContainerRegistry \
+  --sku Basic
+ 
+az group delete --name GraduateWorkRG

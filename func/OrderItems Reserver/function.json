@@ -1,0 +1,12 @@
+{
+    "disabled": false,
+    "bindings": [
+        {
+            "type": "queueTrigger",
+            "direction": "in",
+            "name": "orderQueueItem",
+            "queueName": "orders-items",
+            "connection":"MyStorageConnectionAppSetting"
+        }
+    ]
+}
