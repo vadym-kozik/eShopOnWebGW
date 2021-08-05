@@ -98,8 +98,6 @@ namespace Microsoft.eShopWeb.ApplicationCore.Services
             {
                 httpClient.Dispose();
             }
-
-            await _orderRepository.AddAsync(order);
         }
     }
 }
